@@ -85,7 +85,6 @@ WHERE
 ```
 source: https://gis.stackexchange.com/questions/83387/performing-bounding-box-query-in-postgis 
 %s: Placeholders for query parameters, passed from the Flask backend.
-@ : contained by
 ST_MakeEnvelope(min_lng, min_lat, max_lng, max_lat, 4326): Creates a bounding box for spatial filtering.
 
 c.date = %s: Filters availability for one specific day.
@@ -139,8 +138,8 @@ Returns a 404-style message if the listing doesn’t exist or no matches are fou
 
 Values are allways injected with cursor, to prevent SQL injection Attacks.
 ### Query 3: Average Price and Rating Per Neighborhood
-This query calculates the average price, average review rating, and number of available listings within a user-defined bounding box on a specific date (available).
-Allows users to compare different areas of a city and days based on pricing and quality — useful for heatmaps or neighborhood-level analysis.
+This query calculates average review rating, and number of available listings within a user-defined bounding box .
+Allows users to compare different areas of a city  based on quality — useful for heatmaps or neighborhood-level analysis.
 
 ### Query 3: (SQL Query)
 ```sql
@@ -149,13 +148,10 @@ SELECT
     ROUND(AVG(l.review_scores_rating)::numeric, 2) AS avg_rating,
     COUNT(*) AS listing_count
 FROM listings l
-JOIN calendar c ON l.id = c.listing_id
 WHERE 
-    l.geom @ ST_MakeEnvelope(%s, %s, %s, %s, 4326)
-    AND c.date = %s
-    AND c.available = TRUE;
+    l.geom && ST_MakeEnvelope(%s, %s, %s, %s, 4326)
 ```
-%s: Parameters from frontend — min_longitude, min_latitude, max_longitude, max_latitude, and the date.
+%s: Parameters from frontend — min_longitude, min_latitude, max_longitude, max_latitude,
 
 ST_MakeEnvelope(...): Filters listings to only those within the visible map area.
 
@@ -166,7 +162,7 @@ ROUND: Rounds numeric output for cleaner presentation
 ### Query 3: Unexpected Value Handling
 Returns null for averages if no listings are found.
 
-Backend checks coordinate formats and date validity.
+Backend checks coordinate formats
 
 Empty result or 0 count is handled gracefully in the frontend.
 

@@ -50,7 +50,7 @@ def search_rectangle():
         FROM listings l
         JOIN calendar c ON l.id = c.listing_id
         WHERE 
-            l.geom @ ST_MakeEnvelope(%s, %s, %s, %s, 4326)
+            l.geom && ST_MakeEnvelope(%s, %s, %s, %s, 4326)
             AND c.date = %s
             AND c.available = TRUE
             AND l.review_scores_rating >= %s
@@ -145,29 +145,18 @@ def query_average_price_rating():
         min_lng = float(request.args["min_lng"])
         max_lat = float(request.args["max_lat"])
         max_lng = float(request.args["max_lng"])
-        query_date = request.args["date"]
-
-        # Validate date format
-        try:
-            datetime.strptime(query_date, "%Y-%m-%d")
-        except ValueError:
-            return jsonify({"error": "Invalid date format. Use YYYY-MM-DD."}), 400
 
         # Execute SQL query
         query = """
             SELECT 
-                ROUND(AVG(c.price)::numeric, 2) AS avg_price,
                 ROUND(AVG(l.review_scores_rating)::numeric, 2) AS avg_rating,
                 COUNT(*) AS listing_count
             FROM listings l
-            JOIN calendar c ON l.id = c.listing_id
             WHERE 
                 l.geom && ST_MakeEnvelope(%s, %s, %s, %s, 4326)
-                AND c.date = %s
-                AND c.available = TRUE;
         """
 
-        cursor.execute(query, (min_lng, min_lat, max_lng, max_lat, query_date))
+        cursor.execute(query, (min_lng, min_lat, max_lng, max_lat))
         result = cursor.fetchone()
 
         if result is None:
@@ -176,9 +165,8 @@ def query_average_price_rating():
 
         return jsonify(
             {
-                "avg_price": result[0],
-                "avg_rating": result[1],
-                "listing_count": result[2],
+                "avg_rating": result[0],
+                "listing_count": result[1],
             }
         )
 

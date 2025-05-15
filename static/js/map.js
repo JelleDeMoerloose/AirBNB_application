@@ -10,6 +10,7 @@ const markersLayer = L.layerGroup().addTo(map);
 
 
 
+
 function searchAndPlotListings(map, layerGroup) {
   // 1. Get the bounding box from the map
   const bounds = map.getBounds();
@@ -143,6 +144,42 @@ function highlightNearestHigher(refId) {
       alert(error.message);
     });
 }
+function fetchStats() {
+  // 1. Get the current map bounds
+  const bounds = map.getBounds();
+  const sw = bounds.getSouthWest();
+  const ne = bounds.getNorthEast();
+
+
+  // 3. Build query parameters
+  const params = new URLSearchParams({
+    min_lat: sw.lat.toString(),
+    min_lng: sw.lng.toString(),
+    max_lat: ne.lat.toString(),
+    max_lng: ne.lng.toString(),
+  });
+
+  // 4. Perform the API call
+  fetch(`/api/stats?${params.toString()}`)
+    .then(response => {
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status}`);
+      }
+      return response.json();
+    })
+    .then(data => {
+      // 5. Handle the response data
+      console.log('Average Rating:', data.avg_rating);
+      console.log('Listing Count:', data.listing_count);
+
+      // Update your UI here with the fetched data
+      document.getElementById("avgRating").innerHTML = data.avg_rating
+      document.getElementById("listingCount").innerHTML = data.listing_count
+    })
+    .catch(error => {
+      console.error('Failed to fetch stats:', error);
+    });
+}
 
 
 // Example usage:
@@ -151,4 +188,7 @@ function highlightNearestHigher(refId) {
 // And your inputs/popups already in the HTML:
 document.getElementById('searchBtn').addEventListener('click', () => {
   searchAndPlotListings(map, markersLayer);
+})
+document.getElementById('refreshStatsBtn').addEventListener('click', () => {
+  fetchStats();
 })
