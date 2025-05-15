@@ -6,6 +6,7 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
   maxZoom: 30,
 }).addTo(map);
 
+const markersLayer = L.layerGroup().addTo(map);
 
 
 
@@ -74,7 +75,16 @@ function searchAndPlotListings(map, layerGroup) {
             Rating: ${review_scores_rating || 'N/A'}<br/>
             Price: $${price || 'N/A'}<br/>
             <a href="${listing_url}" target="_blank">View Listing</a>
+             <button id="nearestBtn-${id}">Find Nearest Higher</button>
           `);
+          marker.on('popupopen', function () {
+            const button = document.getElementById(`nearestBtn-${id}`);
+            if (button) {
+              button.addEventListener('click', function () {
+                highlightNearestHigher(id);
+              });
+            }
+          });
           layerGroup.addLayer(marker);
         }
       });
@@ -87,7 +97,7 @@ function searchAndPlotListings(map, layerGroup) {
       alert('Error fetching listings: ' + err.message);
     });
 }
-function highlightNearestHigher(refId, map, markerLayer) {
+function highlightNearestHigher(refId) {
   fetch(`/api/nearest_higher/${refId}`)
     .then(response => {
       if (!response.ok) {
@@ -96,8 +106,7 @@ function highlightNearestHigher(refId, map, markerLayer) {
       return response.json();
     })
     .then(data => {
-      if (markerLayer) markerLayer.clearLayers();
-
+      console.log(data)
       const redIcon = L.icon({
         iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-red.png',
         iconSize: [25, 41],
@@ -105,27 +114,46 @@ function highlightNearestHigher(refId, map, markerLayer) {
         popupAnchor: [1, -34],
         shadowSize: [41, 41]
       });
+      const [
+        id,
+        listing_url,
+        name,
+        latitude,
+        longitude,
+        review_scores_rating,
+        distance
+      ] = data;
 
-      const marker = L.marker([data.latitude, data.longitude], { icon: redIcon });
+      const marker = L.marker([latitude, longitude], { icon: redIcon });
       marker.bindPopup(`
-        <strong>${data.name}</strong><br/>
-        Rating: ${data.review_scores_rating}<br/>
-        Distance: ${Math.round(data.distance_meters)} m<br/>
+        <strong>${name}</strong><br/>
+        Rating: ${review_scores_rating}<br/>
+        Distance: ${Math.round(distance)} m<br/>
         <a href="${data.listing_url}" target="_blank">View Listing</a>
+         <button id="nearestBtn-${id}">Find Nearest Higher</button>
       `);
-      marker.addTo(markerLayer);
-      map.setView([data.latitude, data.longitude], 15);
+      marker.on('popupopen', function () {
+        const button = document.getElementById(`nearestBtn-${id}`);
+        if (button) {
+          button.addEventListener('click', function () {
+            highlightNearestHigher(id);
+          });
+        }
+      });
+      marker.addTo(markersLayer);
+      map.setView([latitude, longitude], 15);
     })
     .catch(error => {
       console.error('Error fetching nearest higher-rated listing:', error);
       alert(error.message);
     });
 }
+
+
 // Example usage:
 // Assume you have:
 //   const map = L.map('map').setView([-33.8688, 151.2093], 12);
-const markersLayer = L.layerGroup().addTo(map);
 // And your inputs/popups already in the HTML:
 document.getElementById('searchBtn').addEventListener('click', () => {
   searchAndPlotListings(map, markersLayer);
-});
+})
