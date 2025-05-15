@@ -24,25 +24,6 @@ def map_view():
     return render_template("home.html")
 
 
-@app.route("/api/listings")
-def get_listings():
-    cur = conn.cursor()
-    cur.execute(
-        """
-        SELECT id, name, ST_X(geom), ST_Y(geom)
-        FROM listings
-        WHERE geom IS NOT NULL
-        LIMIT 1000
-    """
-    )
-    data = [
-        {"id": row[0], "name": row[1], "lon": row[2], "lat": row[3]}
-        for row in cur.fetchall()
-    ]
-    cur.close()
-    return jsonify(data)
-
-
 @app.route("/api/search_rectangle", methods=["GET"])
 def search_rectangle():
     try:
@@ -153,6 +134,56 @@ def nearest_higher(ref_id):
     except Exception as e:
         app.logger.error(f"Error fetching nearest higher-rated listing: {e}")
         return jsonify({"error": "Internal server error."}), 500
+
+
+@app.route("/api/stats", methods=["GET"])
+def query_average_price_rating():
+    try:
+        cursor = conn.cursor()
+        # Extract query parameters
+        min_lat = float(request.args["min_lat"])
+        min_lng = float(request.args["min_lng"])
+        max_lat = float(request.args["max_lat"])
+        max_lng = float(request.args["max_lng"])
+        query_date = request.args["date"]
+
+        # Validate date format
+        try:
+            datetime.strptime(query_date, "%Y-%m-%d")
+        except ValueError:
+            return jsonify({"error": "Invalid date format. Use YYYY-MM-DD."}), 400
+
+        # Execute SQL query
+        query = """
+            SELECT 
+                ROUND(AVG(c.price)::numeric, 2) AS avg_price,
+                ROUND(AVG(l.review_scores_rating)::numeric, 2) AS avg_rating,
+                COUNT(*) AS listing_count
+            FROM listings l
+            JOIN calendar c ON l.id = c.listing_id
+            WHERE 
+                l.geom && ST_MakeEnvelope(%s, %s, %s, %s, 4326)
+                AND c.date = %s
+                AND c.available = TRUE;
+        """
+
+        cursor.execute(query, (min_lng, min_lat, max_lng, max_lat, query_date))
+        result = cursor.fetchone()
+
+        if result is None:
+            # No matching records found
+            return jsonify({"avg_price": None, "avg_rating": None, "listing_count": 0})
+
+        return jsonify(
+            {
+                "avg_price": result[0],
+                "avg_rating": result[1],
+                "listing_count": result[2],
+            }
+        )
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 if __name__ == "__main__":

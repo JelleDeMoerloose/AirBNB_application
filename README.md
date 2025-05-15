@@ -139,20 +139,21 @@ Returns a 404-style message if the listing doesn’t exist or no matches are fou
 
 Values are allways injected with cursor, to prevent SQL injection Attacks.
 ### Query 3: Average Price and Rating Per Neighborhood
-This query calculates the average price, average review rating, and number of available listings within a user-defined bounding box on a specific date.
-Allows users to compare different areas of a city based on pricing and quality — useful for heatmaps or neighborhood-level analysis.
+This query calculates the average price, average review rating, and number of available listings within a user-defined bounding box on a specific date (available).
+Allows users to compare different areas of a city and days based on pricing and quality — useful for heatmaps or neighborhood-level analysis.
 
 ### Query 3: (SQL Query)
 ```sql
-SELECT DISTINCT l.*
+SELECT 
+    ROUND(AVG(c.price)::numeric, 2) AS avg_price,
+    ROUND(AVG(l.review_scores_rating)::numeric, 2) AS avg_rating,
+    COUNT(*) AS listing_count
 FROM listings l
 JOIN calendar c ON l.id = c.listing_id
 WHERE 
-    l.geom && ST_MakeEnvelope(%s, %s, %s, %s, 4326)
+    l.geom @ ST_MakeEnvelope(%s, %s, %s, %s, 4326)
     AND c.date = %s
-    AND c.available = TRUE
-    AND l.review_scores_rating >= %s
-    AND c.price <= %s;
+    AND c.available = TRUE;
 ```
 %s: Parameters from frontend — min_longitude, min_latitude, max_longitude, max_latitude, and the date.
 
