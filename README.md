@@ -67,21 +67,99 @@ npm install  # For Node.js projects
 ---
 
 ## 5. Queries Implemented
-### Query 1: (Task Description)
-- Describe the query task and its real-world application.
+### Query 1: Search Listings Within a Rectangle
+This query finds all listings that fall within a rectangular bounding box (based on the current zoom level in Leaflet), are available on a specific date, and match user-specified filters for minimum rating and maximum price.
+Real-world application: Users can visually explore available Airbnb listings on a map and filter based on price and rating in their desired area of Sydney.
 
 ### Query 1: (SQL Query)
 ```sql
-SELECT * FROM locations WHERE timestamp > NOW() - INTERVAL '1 day';
+SELECT DISTINCT l.*
+FROM listings l
+JOIN calendar c ON l.id = c.listing_id
+WHERE 
+    l.geom && ST_MakeEnvelope(%s, %s, %s, %s, 4326)
+    AND c.date = %s
+    AND c.available = TRUE
+    AND l.review_scores_rating >= %s
+    AND c.price <= %s;
 ```
-- Explanation of variables used in the query.
+%s: Placeholders for query parameters, passed from the Flask backend.
+
+ST_MakeEnvelope(min_lng, min_lat, max_lng, max_lat, 4326): Creates a bounding box for spatial filtering.
+
+c.date = %s: Filters availability for one specific day.
+
+c.available = TRUE: Ensures the listing is not booked.
+
+review_scores_rating >= %s: Filters for listings with sufficient quality.
+
+c.price <= %s: Filters for listings within budget.
 
 ### Query 1: Unexpected Value Handling
-- How does the query handle missing or incorrect values?
+Input types are validated and converted (e.g., float for coordinates, date for c.date).
 
-### Query 2 ...
+If any parameter is missing, Flask returns a 400 error with a helpful message.
 
----
+If no results match, the frontend receives an empty list.
+
+### Query 2: Find Closest Available Listings to a Selected One
+Given a listing ID, this query returns the nearest available listings on a specific date, with filters for rating and price.
+Real-world application: If a user's preferred listing is unavailable or not ideal, the app can suggest alternatives nearby with similar or better quality and price.
+
+### Query 2: (SQL Query)
+```sql
+SELECT DISTINCT l.*
+FROM listings l
+JOIN calendar c ON l.id = c.listing_id
+WHERE 
+    l.geom && ST_MakeEnvelope(%s, %s, %s, %s, 4326)
+    AND c.date = %s
+    AND c.available = TRUE
+    AND l.review_scores_rating >= %s
+    AND c.price <= %s;
+```
+l1.id = %s: The reference listing.
+
+ST_Distance(...): Computes geospatial distance between listings.
+
+Other filters are identical to Query 1.
+### Query 2: Unexpected Value Handling
+Ensures that the reference_listing_id exists before querying.
+
+Returns a 404-style message if the listing doesn’t exist or no matches are found.
+
+Input types (e.g., date, float) are validated.
+
+### Query 3: Average Price and Rating Per Neighborhood
+This query calculates the average price, average review rating, and number of available listings within a user-defined bounding box on a specific date.
+Allows users to compare different areas of a city based on pricing and quality — useful for heatmaps or neighborhood-level analysis.
+
+### Query 3: (SQL Query)
+```sql
+SELECT DISTINCT l.*
+FROM listings l
+JOIN calendar c ON l.id = c.listing_id
+WHERE 
+    l.geom && ST_MakeEnvelope(%s, %s, %s, %s, 4326)
+    AND c.date = %s
+    AND c.available = TRUE
+    AND l.review_scores_rating >= %s
+    AND c.price <= %s;
+```
+%s: Parameters from frontend — min_longitude, min_latitude, max_longitude, max_latitude, and the date.
+
+ST_MakeEnvelope(...): Filters listings to only those within the visible map area.
+
+AVG, COUNT: Used to generate aggregate statistics.
+
+ROUND: Rounds numeric output for cleaner presentation
+
+### Query 3: Unexpected Value Handling
+Returns null for averages if no listings are found.
+
+Backend checks coordinate formats and date validity.
+
+Empty result or 0 count is handled gracefully in the frontend.
 
 ## 6. How to Run the Application
 ```bash
