@@ -83,8 +83,9 @@ WHERE
     AND l.review_scores_rating >= %s
     AND c.price <= %s;
 ```
+source: https://gis.stackexchange.com/questions/83387/performing-bounding-box-query-in-postgis 
 %s: Placeholders for query parameters, passed from the Flask backend.
-
+@ : contained by
 ST_MakeEnvelope(min_lng, min_lat, max_lng, max_lat, 4326): Creates a bounding box for spatial filtering.
 
 c.date = %s: Filters availability for one specific day.
@@ -103,33 +104,40 @@ If any parameter is missing, Flask returns a 400 error with a helpful message.
 If no results match, the frontend receives an empty list.
 
 ### Query 2: Find Closest Available Listings to a Selected One
-Given a listing ID, this query returns the nearest available listings on a specific date, with filters for rating and price.
-Real-world application: If a user's preferred listing is unavailable or not ideal, the app can suggest alternatives nearby with similar or better quality and price.
+Given a listing ID, this query returns the NEAREST NEIGHBOURING available listing with a higher rating
+Real-world application: If a user's preferred listing is not ideal, the app can suggest alternatives nearby with similar or better quality and price.
 
 ### Query 2: (SQL Query)
 ```sql
-SELECT DISTINCT l.*
-FROM listings l
-JOIN calendar c ON l.id = c.listing_id
-WHERE 
-    l.geom && ST_MakeEnvelope(%s, %s, %s, %s, 4326)
-    AND c.date = %s
-    AND c.available = TRUE
-    AND l.review_scores_rating >= %s
-    AND c.price <= %s;
+SELECT
+    id,
+    listing_url,
+    name,
+    latitude,
+    longitude,
+    review_scores_rating,
+    ST_Distance(%s::geography, geom::geography) AS distance_meters
+FROM listings
+WHERE
+    id <> %s
+    AND review_scores_rating > %s
+ORDER BY
+    geom <-> %s
+LIMIT 1
 ```
 l1.id = %s: The reference listing.
+ %s : the second is the geom
+
+ !NOTE: we have obtained this from a previous query , to check if even that listing exist --> prevent unneccesary joins.
 
 ST_Distance(...): Computes geospatial distance between listings.
 
-Other filters are identical to Query 1.
 ### Query 2: Unexpected Value Handling
 Ensures that the reference_listing_id exists before querying.
 
 Returns a 404-style message if the listing doesn’t exist or no matches are found.
 
-Input types (e.g., date, float) are validated.
-
+Values are allways injected with cursor, to prevent SQL injection Attacks.
 ### Query 3: Average Price and Rating Per Neighborhood
 This query calculates the average price, average review rating, and number of available listings within a user-defined bounding box on a specific date.
 Allows users to compare different areas of a city based on pricing and quality — useful for heatmaps or neighborhood-level analysis.

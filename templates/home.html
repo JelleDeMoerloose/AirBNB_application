@@ -5,12 +5,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sydney Airbnb Map</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
 
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" />
 
     <!-- Leaflet JS -->
-    <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js" defer></script>
 
     <!-- Include the external JS file -->
     <script src="{{ url_for('static', filename='js/map.js') }}" defer></script>
@@ -25,10 +27,55 @@
 </head>
 
 <body>
-    <h1>Sydney Airbnb Listings</h1>
+    <!-- Header -->
+    <header class="bg-light py-3 shadow-sm">
+        <div class="container">
+            <h1 class="h3 mb-0">Sydney Airbnb Listings</h1>
+        </div>
+    </header>
 
-    <!-- Map Container -->
-    <div id="map"></div>
+    <!-- Controls -->
+    <section class="py-3">
+        <div class="container">
+            <div class="card bg-primary text-white shadow-sm">
+                <div class="card-body">
+                    <div id="searchForm" class="row g-3 align-items-end">
+                        <div class="col-md-3">
+                            <label for="date" class="form-label">Date</label>
+                            <select id="date" class="form-select" required>
+                                <option value="">Choose a date…</option>
+                                <option value="2019-07-01">July 1, 2019</option>
+                                <option value="2019-07-02">July 2, 2019</option>
+                                <option value="2019-07-03">July 3, 2019</option>
+                                <option value="2019-07-04">July 4, 2019</option>
+                                <option value="2019-07-05">July 5, 2019</option>
+                                <option value="2019-07-06">July 6, 2019</option>
+                                <option value="2019-07-07">July 7, 2019</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="min_rating" class="form-label">Min Rating</label>
+                            <input id="min_rating" name="min_rating" type="number" step="1" min="0" max="100"
+                                class="form-control" placeholder="0–100">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="max_price" class="form-label">Max Price</label>
+                            <input id="max_price" name="max_price" type="number" step="1" class="form-control"
+                                placeholder="e.g. 200">
+                        </div>
+                        <div class="col-md-3 text-end">
+                            <button id="searchBtn" class="btn btn-light w-100">Search</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Map -->
+    <main class="flex-grow-1">
+        <div id="map"></div>
+    </main>
 </body>
 
 </html>
