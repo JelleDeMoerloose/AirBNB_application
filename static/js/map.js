@@ -107,13 +107,7 @@ function highlightNearestHigher(refId) {
     })
     .then(data => {
       console.log(data)
-      const redIcon = L.icon({
-        iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-red.png',
-        iconSize: [25, 41],
-        iconAnchor: [12, 41],
-        popupAnchor: [1, -34],
-        shadowSize: [41, 41]
-      });
+
       const [
         id,
         listing_url,
@@ -124,12 +118,12 @@ function highlightNearestHigher(refId) {
         distance
       ] = data;
 
-      const marker = L.marker([latitude, longitude], { icon: redIcon });
+      const marker = L.marker([latitude, longitude]);
       marker.bindPopup(`
         <strong>${name}</strong><br/>
         Rating: ${review_scores_rating}<br/>
         Distance: ${Math.round(distance)} m<br/>
-        <a href="${data.listing_url}" target="_blank">View Listing</a>
+        <a href="${listing_url}" target="_blank">View Listing</a>
          <button id="nearestBtn-${id}">Find Nearest Higher</button>
       `);
       marker.on('popupopen', function () {
@@ -140,6 +134,7 @@ function highlightNearestHigher(refId) {
           });
         }
       });
+      markersLayer.clearLayers();
       marker.addTo(markersLayer);
       map.setView([latitude, longitude], 15);
     })
