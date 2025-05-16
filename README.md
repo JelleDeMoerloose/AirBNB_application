@@ -44,7 +44,7 @@
   - Leaflet.js for the interactive, plug-and-play map view.
   - JavaScript to control map behavior, manage user interactions, and dynamically update content.
   - Fetch API to perform real-time REST calls to the backend in js.
-- Database: (e.g., PostgreSQL with PostGIS)
+- Database:  PostgreSQL with PostGIS
 
 ### Packages & Dependencies
   - Psycopg2 — PostgreSQL adapter for Python, used to execute queries securely and manage connections.
