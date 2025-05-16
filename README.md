@@ -98,6 +98,17 @@ The next script will create the tables, and load the data and create indexes.
   ```bash
   \i path/to/init_airbnb.sql
   ```
+- **Database Connection**
+- In the root of the directory make an .env file with thhe following fields, and fill them in according to the database you created:
+  ```bash
+    DB_HOST=localhost
+    DB_USER=postgres
+    DB_PASSWORD=111111
+    DB_NAME=my_spatial_db
+    DB_PORT=5432
+  ```
+
+
 
 ## 4. Code Structure
 ### Frontend
@@ -123,16 +134,7 @@ In map.js:
 - **GET `/api/stats`**  
   Returns summary statistics (average rating and listing count) for listings within the current map bounds.
 
-### Database Connection
-- Location of the code that connects the backend to the database (e.g., `.env`).
-- Example of how the application connects to the database:
-  ```bash
-    DB_HOST=localhost
-    DB_USER=postgres
-    DB_PASSWORD=111111
-    DB_NAME=my_spatial_db
-    DB_PORT=5432
-  ```
+
 ---
 
 ## 5. Queries Implemented
@@ -170,10 +172,13 @@ Input types are validated and converted (e.g., float for coordinates, date for c
 If any parameter is missing, Flask returns a 400 error with a helpful message.
 
 If no results match, the frontend receives an empty list.
+The rating must be between 0 and 100.
+Values are allways injected with cursor, to prevent SQL injection Attacks.
+
 
 ### Query 2: Find Closest Available Listings to a Selected One
-Given a listing ID, this query returns the NEAREST NEIGHBOURING available listing with a higher rating
-Real-world application: If a user's preferred listing is not ideal, the app can suggest alternatives nearby with similar or better quality and price.
+Given a listing ID, this query returns the NEAREST NEIGHBOURING listing with a higher rating. (it neglects availability)
+Real-world application: If a user's preferred listing is not ideal, the app can suggest alternatives nearby with better quality.
 
 ### Query 2: (SQL Query)
 ```sql
@@ -206,8 +211,9 @@ Ensures that the reference_listing_id exists before querying.
 Returns a 404-style message if the listing doesn’t exist or no matches are found.
 
 Values are allways injected with cursor, to prevent SQL injection Attacks.
+
 ### Query 3: Average Price and Rating Per Neighborhood
-This query calculates average review rating, and number of available listings within a user-defined bounding box .
+This query calculates average review rating, and number of listings within a user-defined bounding box .
 Allows users to compare different areas of a city  based on quality — useful for heatmaps or neighborhood-level analysis.
 
 ### Query 3: (SQL Query)
@@ -235,31 +241,21 @@ Backend checks coordinate formats
 
 Empty result or 0 count is handled gracefully in the frontend.
 
+Values are allways injected with cursor, to prevent SQL injection Attacks.
+
+
 ## 6. How to Run the Application
+In root just run:
 ```bash
-# Start Backend Server
-node server.js
+    python app.py
+  ```
 
-# Start Frontend
-cd client
-npm start
-```
-- Any additional instructions for running or testing the application.
-
----
 
 ## 7. Port Usage
-List the localhost port used by the backend and frontend. E.g.,
-- Backend Port: 3000
-- Frontend Port: 3001
+- PORT 5000
 
 ## 8. UI Address
-E.g., [https:\\localhost:3000](http://localhost:3000/)
+E.g., [https:\\localhost:5000](http://127.0.0.1:5000)
 
 ## 9. Additional Notes
-- Any assumptions made in the project.
-- Acknowledgement to external resources (lib, packages, GPTs) or research papers.
-
----
-### Note
-You are welcome to explore the potential of this project using Large Language Models (LLMs) such as ChatGPT or LLM-powered applications (e.g., Cursor). However, DeepSeek and any applications supported by DeepSeek are **NOT allowed** for this project!
+- I acknowledge using ChatGPT for generating HTML code to generate my UI, I also used it to troubleshoot errors in my javascript and python file . Finally, I used it to help me write the documentation and report to prevent spelling mistakes.

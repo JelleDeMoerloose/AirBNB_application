@@ -37,6 +37,11 @@ def search_rectangle():
         date_str = request.args["date"]
         min_rating = float(request.args.get("min_rating", 0))
         max_price = float(request.args.get("max_price", 1e9))
+        if not (0 <= min_rating <= 100):
+            return (
+                jsonify({"error": "Invalid min_rating. Must be between 0 and 100."}),
+                400,
+            )
 
         # Validate date format
         try:
@@ -87,6 +92,7 @@ def search_rectangle():
 @app.route("/api/nearest_higher/<int:ref_id>", methods=["GET"])
 def nearest_higher(ref_id):
     try:
+
         # Step 1: Retrieve the reference listing's rating and geometry
         cursor = conn.cursor()
         cursor.execute(
