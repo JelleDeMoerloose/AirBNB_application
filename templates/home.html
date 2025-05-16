@@ -77,24 +77,30 @@
         <div id="map"></div>
     </main>
     <div class="container my-4">
-        <div class="card text-white bg-info shadow" id="statsCard">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="mb-0">Area Statistics on All Dates</h5>
+        <div class="card shadow-lg" id="statsCard"
+            style="background: linear-gradient(135deg, #17a2b8, #138496); border: none;">
+            <div class="card-header d-flex justify-content-between align-items-center bg-transparent border-0">
+                <h5 class="mb-0 text-white">Area Statistics in this Zone</h5>
                 <button id="refreshStatsBtn" class="btn btn-light btn-sm">
                     🔄 Refresh stats for this area
                 </button>
             </div>
-            <div class="card-body">
-
-                <p class="card-text mb-2">
-                    <strong>Average Rating:</strong> <span id="avgRating">–</span>
-                </p>
-                <p class="card-text">
-                    <strong>Listing Count:</strong> <span id="listingCount">–</span>
-                </p>
+            <div class="card-body text-white">
+                <div class="row text-center">
+                    <div class="col-md-6 mb-3">
+                        <h6 class="text-uppercase">Average Rating</h6>
+                        <p class="display-6 fw-bold mb-0" id="avgRating">–</p>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <h6 class="text-uppercase">Listing Count</h6>
+                        <p class="display-6 fw-bold mb-0" id="listingCount">–</p>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
+
+
 </body>
 
 </html>

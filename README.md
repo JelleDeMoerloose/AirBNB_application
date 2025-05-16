@@ -1,26 +1,55 @@
 
 # AIRBNB_APPLICATION
+![Homepage screenshot](preview/application.png)
 
 ## 1. Project Overview
 ### Motivation
-- What problem does this web application solve?
-- Why is this application useful in a real-world scenario?
+- This web application helps users easily find available Airbnb-style listings directly on a map, without needing to search by city name.
+
+- For example, a traveler can simply zoom in on Sydney, Bondi Beach, or any region, and instantly discover listings available on a specific date, within a budget, and above a certain rating.
+
+- It’s especially helpful when users don’t know the exact name of the neighborhood or want to explore areas by location rather than text search.
+
+- In addition, the app improves on the traditional Airbnb experience by:
+
+  - Letting users find the closest better-rated listings, so they don’t miss higher-quality options nearby.
+
+  - Showing live statistics (like average rating and listing density) based on the area currently visible on the map .
 
 ### Web Application Functions
-- List the main functionalities of the web application.
-- Describe how high-dimensional queries are used in the application.
+- Map-based Listing Search:
+
+  - Search for available listings in any rectangular area on the map.
+
+  - Filter results by date, price range, and minimum rating.
+
+- Better Nearby Listings:
+
+  - Click on any listing to find the nearest available listing with a higher rating — perfect for upgrading your stay.
+
+- Dynamic Area Statistics:
+
+  - See average rating and listing count for the region you're viewing — helpful for comparing neighborhoods.
 
 ---
 
 ## 2. Technology Stack
 ### Programming Languages & Frameworks
-- Backend: (e.g., Python with Flask/Django, Node.js, Java Spring Boot)
-- Frontend: (e.g., React, Vue.js, HTML/CSS/JavaScript)
+- Backend: 
+  - Flask (Python) — for handling routes, rendering templates, and building REST endpoints.
+  - PostgreSQL + PostGIS — used to store and query geographic listing data efficiently (spatial filtering, proximity, bounding box queries).
+
+- Frontend: 
+  - HTML5 and Bootstrap for a modern, responsive UI layout that adapts to any screen size.
+  - Leaflet.js for the interactive, plug-and-play map view.
+  - JavaScript to control map behavior, manage user interactions, and dynamically update content.
+  - Fetch API to perform real-time REST calls to the backend in js.
 - Database: (e.g., PostgreSQL with PostGIS)
 
 ### Packages & Dependencies
-- List any third-party packages used (e.g., `psycopg2`, `SQLAlchemy`, `express`, `pg-promise`)
-- Briefly describe the purpose of each package.
+  - Psycopg2 — PostgreSQL adapter for Python, used to execute queries securely and manage connections.
+  - dotenv — for managing environment variables like database credentials securely.
+
 ---
 
 ## 3. Setup Instructions
@@ -28,31 +57,71 @@
 For example,
 ```bash
 # Install required dependencies
-npm install  # For Node.js projects
+python -m venv venv
+venv\Scripts\activate #for windows CMD
+# 3. Install Python dependencies
+pip install -r requirements.txt
 ```
 
 ### Database Configuration
-- **Database Schema**: Provide an overview of the database structure.
-- **How to Initialize Database**:
-  ```bash
-  psql -U username -d database_name -f init.sql
-  ```
-- **How to Load Data**: e.g., from a csv file.
-  ```sql
-  COPY table_name FROM 'path/to/data.csv' DELIMITER ',' CSV HEADER;
-  ```
-- **Customization of the Data (if any)**: e.g., convert attribute to TIMESTAMP type
+- **Database Schema**: 
+![tables](preview/tables.png)
+![calendar_table](preview/table_calendar.png)
+![listings_table](preview/table_listings.png)
 
----
+- **How to get The data**:
+
+Download from https://www.kaggle.com/datasets/tylerx/sydney-airbnb-open-data
+only download calendar_dec18.csv and listings_dec18
+Convert to UTF-8 with a online converter (https://www.virtualbadge.io/resources/utf-8-converter-for-csv-files) , even tho it is supposed to be UTF-8 , I had some issues if i did not.
+
+!!! Place them in a directory (make yourself) called data. And rename them to calendar.csv and listings.csv (otherwise you have to change this in clean_data.py)
+
+Now run the clean_data.py script to clean your data, this removes "$" and null value from the price field, and some other cleaning. The outputs are stored in tablename_cleaned_subset.csv.
+
+Now you should be set for the next step!
+
+
+- **How to Initialize Database**:
+
+
+create a database in your postgres and connect to it
+
+  ```bash
+  psql -U your_username -d your_database
+
+  ```
+Edit the init_airbnb.sql on line 37, 39, to point to the cleaned csv files (you can do this by copying the path to the csv and replacing it in the line)
+
+The next script will create the tables, and load the data and create indexes.
+
+  ```bash
+  \i path/to/init_airbnb.sql
+  ```
 
 ## 4. Code Structure
 ### Frontend
-- Location of frontend code: e.g., `client/`
-- Key frontend functions related to querying the database.
+- The HTML paged gets rendered and is located at /templates/home.html
+- The javascript file that is used is located in /static/js/map.js
+
+The frontend is built with HTML5 and Bootstrap for a sleek, responsive design that works well across devices. The interactive map is powered by Leaflet.js, a lightweight open-source JavaScript library that makes it easy to embed and control maps. Custom JavaScript is used to handle user interactions (like panning, zooming, and clicking) and to perform REST API calls to dynamically load and display available listings based on the current map view and selected filters.
+
+In map.js:
+- `searchAndPlotListings` fetches and displays Airbnb listings within the visible map area based on user-selected filters.  
+- `highlightNearestHigher` finds and highlights the nearest listing with a higher rating than the selected one.  
+- `fetchStats` retrieves and displays average rating and total listing count for the current map view.
+
 
 ### Backend
-- Location of backend code: e.g., `server.js`
-- Key API endpoints and their descriptions.
+- Location of backend code: app.py
+- **GET `/api/search_rectangle`**  
+  Returns Airbnb listings available within a given bounding box, filtered by date, minimum rating, and maximum price.
+
+- **GET `/api/nearest_higher/<ref_id>`**  
+  Finds and returns the nearest listing that has a higher rating than the listing with the specified ID.
+
+- **GET `/api/stats`**  
+  Returns summary statistics (average rating and listing count) for listings within the current map bounds.
 
 ### Database Connection
 - Location of the code that connects the backend to the database (e.g., `.env`).
